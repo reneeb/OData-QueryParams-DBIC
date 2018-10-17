@@ -1,5 +1,3 @@
 *.swp
-MySQL-Workbench-DBIC*
+OData-QueryParams-DBIC-*
 .build*
-t/Test*
-t/*.bak
