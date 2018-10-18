@@ -16,22 +16,27 @@ use Mojo::URL;
 
 our @EXPORT = qw(params_to_dbic);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-sub params_to_dbic ( $query_string ) {
+sub params_to_dbic ( $query_string, %opts ) {
     my $query  = Mojo::URL->new->query( $query_string );
-    my $params = $query->query->to_hash;
+    my $params = $query->query->to_hash || {};
 
-    my %opts;
+    my $filter_key = $opts{strict} ? '$filter' : 'filter';
+    my %filter = _parse_filter( $params->{$filter_key} );
+
+    my %dbic_opts;
     for my $param_key ( keys %{ $params || {} } ) {
+        $param_key =~ s{\A\$}{} if !$opts{strict};
+
         my $sub = __PACKAGE__->can( '_parse_' . $param_key );
         if ( $sub ) {
             my %key_opts = $sub->( $params->{$param_key} );
-            %opts = (%opts, %key_opts);
+            %dbic_opts = (%dbic_opts, %key_opts);
         }
     }
 
-    return \%opts;
+    return \%filter, \%dbic_opts;
 }
 
 sub _parse_top ( $top_data ) {
@@ -88,12 +93,13 @@ in the I<search> method.
 
     use OData::QueryParams::DBIC;
     
-    my $query_string = 'orderby=username asc, userid';
-    my $opts         = params_to_dbic( $query_string );
+    my $query_string  = 'orderby=username asc, userid';
+    my ($where,$opts) = params_to_dbic( $query_string );
     
-    # { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
+    # $where = {}
+    # $opts  = { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
     # can be used in
-    # $schema->resultset('users')->search( undef, $opts );
+    # $schema->resultset('users')->search( $where, $opts );
 
 =head1 EXPORTED FUNCTION
 
@@ -104,7 +110,27 @@ DBIx::Class.
 
     use OData::QueryParams::DBIC;
     
-    my $query_string = 'orderby=username asc, userid';
-    my $opts         = params_to_dbic( $query_string );
+    my $query_string  = 'orderby=username asc, userid';
+    my ($where,$opts) = params_to_dbic( $query_string );
+
+More examples:
+
+    my $query_string  = 'filter=Price eq 5&orderby=username asc, userid';
+    my ($where,$opts) = params_to_dbic( $query_string );
     
+    # $where = { Price => 5 }
+    # $opts  = { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
+
+    my $query_string  = 'select=Price&orderby=username asc, userid';
+    my ($where,$opts) = params_to_dbic( $query_string );
+    
+    # $where = {}
+    # $opts  = { columns => ['Price'], order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
+
+    my $query_string  = 'orderby=username asc, userid';
+    my ($where,$opts) = params_to_dbic( $query_string );
+    
+    # $where = {}
+    # $opts  = { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
+
 =cut
