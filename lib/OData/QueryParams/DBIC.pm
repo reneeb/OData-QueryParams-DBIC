@@ -13,20 +13,34 @@ no warnings 'experimental::signatures';
 use parent 'Exporter';
 
 use Carp qw(croak);
-use Mojo::URL;
+use Mojo::Parameters;
 use OData::QueryParams::DBIC::FilterUtils qw(parser);
 use List::Util qw(any);
+use Scalar::Util qw(blessed);
 
 our @EXPORT = qw(params_to_dbic);
 
 our $VERSION = '0.02';
 
 sub params_to_dbic ( $query_string, %opts ) {
-    my $query  = Mojo::URL->new->query( $query_string );
-    my $params = $query->query->to_hash || {};
+    my $query;
+
+    if ( blessed $query_string ) {
+        if ( $query_string->isa('Mojo::Parameters') ) {
+            $query = $query_string
+        }
+        else {
+            croak 'Invalid object';
+        }
+    }
+    else {
+        $query = Mojo::Parameters->new( $query_string );
+    }
+
+    my $params = $query->to_hash || {};
 
     my $filter_key = $opts{strict} ? '$filter' : 'filter';
-    my %filter = _parse_filter( $params->{$filter_key} );
+    my %filter = _parse_filter( delete $params->{$filter_key} );
 
     my %dbic_opts;
     for my $param_key ( keys %{ $params || {} } ) {
