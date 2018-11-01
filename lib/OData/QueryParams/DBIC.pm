@@ -276,7 +276,7 @@ A more complex one:
 
 =head2 skip
 
-In combination with C<top>, this can be used for pageination.
+In combination with C<top>, this can be used for pagination.
 
     my $query_string = 'skip=5';
     my $opts = paras_to_dbic( $query_string );
