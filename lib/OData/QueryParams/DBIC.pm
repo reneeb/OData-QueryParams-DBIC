@@ -12,7 +12,10 @@ no warnings 'experimental::signatures';
 
 use parent 'Exporter';
 
+use Carp qw(croak);
 use Mojo::URL;
+use OData::QueryParams::DBIC::FilterUtils qw(parser);
+use List::Util qw(any);
 
 our @EXPORT = qw(params_to_dbic);
 
@@ -50,8 +53,13 @@ sub _parse_skip ( $skip_data ) {
 }
 
 sub _parse_filter ( $filter_data ) {
-    use Data::Dumper;
-    print STDERR Dumper( $filter_data );
+    return if !defined $filter_data;
+    return if $filter_data eq '';
+
+    my $obj    = parser->( $filter_data );
+    my %filter = _flatten_filter( $obj );
+
+    return %filter;
 }
 
 sub _parse_orderby ( $orderby_data ) {
@@ -73,6 +81,70 @@ sub _parse_orderby ( $orderby_data ) {
 
 sub _parse_select ( $select_data ) {
     return columns => [ split /\s*,\s*/, $select_data ];
+}
+
+sub _flatten_filter ($obj) {
+    my %map = (
+        'lt'  => '<',
+        'le'  => '<=',
+        'gt'  => '>',
+        'ge'  => '>=',
+        'eq'  => '==',
+        'ne'  => '!=',
+        'and' => \&_build_bool,
+        'or'  => \&_build_bool,
+    );
+
+    my $op = $obj->{operator};
+
+    croak 'Unknown op' if !defined $op;
+
+    my %filter;
+
+    if ( !exists $map{$op} ) {
+        croak 'Unsupported op: ' . $op;
+    }
+    else {
+        my $rule    = $map{$op};
+        my $subject = $obj->{subject};
+        my $value   = $obj->{value};
+
+        if ( !defined $subject ) {
+            croak 'Unsupported expression';
+        }
+        elsif ( ref $rule ) {
+            my ($filter_key, $filter_value) = $rule->($obj);
+            $filter{$filter_key}            = $filter_value;
+        }
+        else {
+            if ( ref $subject ) {
+                croak 'Complex expressions on the left side are not supported (yet)';
+            }
+
+            if ( $value =~ m{\A'(.*)'\z} ) {
+                $value = $1;
+            }
+
+            $subject =~ s{\A\w+\K/}{.};
+
+            $filter{ $subject } = {
+                $rule => $value,
+            };
+        }
+    }
+
+    return %filter;
+}
+
+sub _build_bool ($obj ) {
+    my $op      = $obj->{operator};
+    my $subject = $obj->{subject};
+    my $value   = $obj->{value};
+
+    return "-$op" => [
+        { _flatten_filter( $subject ) },
+        { _flatten_filter( $value ) },
+    ];
 }
 
 1;
@@ -132,5 +204,78 @@ More examples:
     
     # $where = {}
     # $opts  = { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
+
+=head1 SUPPORTED QUERY PARAMS
+
+=head2 filter
+
+This lists the top I<number> of entries.
+
+    my $query_string   = 'filter=Price le 100';
+    my ($where, $opts) = paras_to_dbic( $query_string );
+    
+    # $where = { Price => { '<=' => 100 } }
+
+Currently only simple filters are supported:
+
+    "filter=Price le 3.5 or Price gt 200"
+        => { -or => [ { Price => { '<=' => 3.5 } }, { Price => { '>' => 200 } } ] } },
+    
+    "filter=Price le 200 and Price gt 3.5"
+        => { -and => [ { Price => { '<=' => 200 } }, { Price => { '>' => 3.5 } } ] },
+    
+    "filter=Price le 100"
+        => { Price => { '<=' => 100 } },
+    
+    "filter=Price lt 20"
+        => { Price => { '<' => 20 } },
+    
+    "filter=Price ge 10"
+        => { Price => { '>=' => 10 } },
+    
+    "filter=Price gt 20"
+        => { Price => { '>' => 20 } },
+    
+    "filter=Address/City ne 'London'"
+        => { 'Address.City' => { '!=' => 'London' } },
+    
+    "filter=Address/City eq 'Redmond'"
+        => { 'Address.City' => 'Redmond' },
+
+=head2 orderby
+
+This orders the list of entries by the given column.
+
+A simple query string:
+
+    my $query_string = 'orderby=username';
+    my $opts = paras_to_dbic( $query_string );
+    
+    # $opts = { order_by => [ {-asc => 'username'} ] };
+
+A more complex one:
+
+    my $query_string = 'orderby=username asc, userid asc';
+    my $opts = paras_to_dbic( $query_string );
+    
+    # $opts = { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] };
+
+=head2 skip
+
+In combination with C<top>, this can be used for pageination.
+
+    my $query_string = 'skip=5';
+    my $opts = paras_to_dbic( $query_string );
+    
+    # $opts = { page => 5 }
+
+=head2 top
+
+This lists the top I<number> of entries.
+
+    my $query_string = 'top=5';
+    my $opts = paras_to_dbic( $query_string );
+    
+    # $opts = { rows => 5 }
 
 =cut

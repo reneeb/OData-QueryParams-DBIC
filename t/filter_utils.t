@@ -6,103 +6,186 @@ use strict;
 use warnings;
 
 use Test::More;
-use OData::QueryParams::DBIC::FilterUtils;
+use OData::QueryParams::DBIC::FilterUtils qw(parser);
 
-use Data::Printer;
+#use Data::Printer;
 
 my %tests = (
     "Price mod 2 eq 0"                                         =>
         {
-            lastop =>  0,
-            lop =>     "Price",
-            op =>      "mod",
-            rop =>     2,
-            sop =>     "eq"
+            operator =>   "eq",
+            subject  =>  {
+                operator =>  "mod",
+                subject  =>  "Price",
+                value    =>  2,
+            },
+            value => 0,
         },
     "Price div 2 gt 4"                                         =>
         {
-            lastop =>  4,
-            lop =>     "Price",
-            op =>      "div",
-            rop =>     2,
-            sop =>     "gt"
+            operator =>   "gt",
+            subject  =>  {
+                operator =>  "div",
+                subject  =>  "Price",
+                value    =>  2,
+            },
+            value => 4,
         },
     "Price mul 2 gt 2000"                                      =>
         {
-            lastop =>  2000,
-            lop =>     "Price",
-            op =>      "mul",
-            rop =>     2,
-            sop =>     "gt"
+            operator =>   "gt",
+            subject  =>  {
+                operator =>  "mul",
+                subject  =>  "Price",
+                value    =>  2,
+            },
+            value => 2000,
         },
     "Price sub 5 gt 10"                                        =>
         {
-            lastop =>  10,
-            lop =>     "Price",
-            op =>      "sub",
-            rop =>     5,
-            sop =>     "gt"
+            operator =>   "gt",
+            subject  =>  {
+                operator =>  "sub",
+                subject  =>  "Price",
+                value    =>  5,
+            },
+            value => 10,
         },
     "Price add 5 gt 10"                                        => 
         {
-            lastop =>  10,
-            lop =>     "Price",
-            op =>      "add",
-            rop =>     5,
-            sop =>     "gt"
+            operator =>   "gt",
+            subject  =>  {
+                operator =>  "add",
+                subject  =>  "Price",
+                value    =>  5,
+            },
+            value => 10,
         },
     "Price le 3.5 or Price gt 200"                             =>
         {
-            lastop =>  200,
-            lop =>     "Price",
-            op =>      "le",
-            rop =>     3.5,
-            sop =>     "gt"
+            operator =>   "or",
+            subject  =>  {
+                operator =>  "le",
+                subject  =>  "Price",
+                value    =>  3.5,
+            },
+            value =>     {
+                operator =>  "gt",
+                subject  =>  "Price",
+                value    =>  200,
+            }
         },
     "Price le 200 and Price gt 3.5"                            =>
         {
-            lastop =>  3.5,
-            lop =>     "Price",
-            op =>      "le",
-            rop =>     200,
-            sop =>     "gt"
+            operator =>   "and",
+            subject  =>  {
+                operator =>  "le",
+                subject  =>  "Price",
+                value    =>  200,
+            },
+            value =>     {
+                operator =>  "gt",
+                subject  =>  "Price",
+                value    =>  3.5,
+            }
         },
     "Price le 100"                                             =>
         {
-            lop =>  "Price",
-            op =>   "le",
-            rop =>  100
+            operator =>  "le",
+            subject  =>  "Price",
+            value    =>  100,
         },
     "Price lt 20"                                              =>
         {
-            lop =>  "Price",
-            op =>   "lt",
-            rop =>  20
+            operator =>  "lt",
+            subject  =>  "Price",
+            value    =>  20
         },
     "Price ge 10"                                              =>
         {
-            lop =>  "Price",
-            op =>   "ge",
-            rop =>  10
+            operator =>  "ge",
+            subject  =>  "Price",
+            value    =>  10
         },
     "Price gt 20"                                              =>
         {
-            lop =>  "Price",
-            op =>   "gt",
-            rop =>  20
+            operator =>  "gt",
+            subject  =>  "Price",
+            value    =>  20
         },
-    "Address/City ne 'London'"                                 => {},
-    "Address/City eq 'Redmond'"                                => {},
-    "substringof('Alfreds', CompanyName) eq true"  => {},
-    "endswith(CompanyName, 'Futterkiste') eq true" => {},
-    "startswith(CompanyName, 'Alfr') eq true"      => {},
+    "Address/City ne 'London'"                                 =>
+        {
+            operator =>  "ne",
+            subject  =>  "Address/City",
+            value    =>  "'London'",
+        },
+    "Address/City eq 'Redmond'"                                =>
+        {
+            operator =>  "eq",
+            subject  =>  "Address/City",
+            value    =>  "'Redmond'",
+        },
+    "substringof('Alfreds', CompanyName) eq true"  =>
+        {
+            operator =>  "eq",
+            subject  =>  {
+                operator =>  "substringof",
+                subject  =>  "Alfreds",
+                value    =>  "CompanyName"
+            },
+            value =>     "true"
+        },
+    "endswith(CompanyName, 'Futterkiste') eq true" =>
+        {
+            operator =>  "eq",
+            subject  =>  {
+                operator =>  "endsWith",
+                subject  =>  "CompanyName",
+                value    =>  "Futterkiste"
+            },
+            value =>     "true"
+        },
+    "startswith(CompanyName, 'Alfr') eq true"      =>
+        {
+            operator =>  "eq",
+            subject  =>  {
+                operator =>  "startsWith",
+                subject  =>  "CompanyName",
+                value    =>  "Alfr"
+            },
+            value =>     "true"
+        },
+    "((name eq 'Serena') and (age lt 5))" =>
+        {
+            operator =>  "and",
+            subject  =>   {
+                operator =>  "eq",
+                subject  =>  "name",
+                value    =>  "'Serena'"
+            },
+            value =>     {
+                operator =>  "lt",
+                subject  =>  "age",
+                value    =>  5,
+            }
+        },
+    "(Price sub 5) gt 10" =>
+        {
+            operator =>  "gt",
+            subject  =>   {
+                operator =>  "sub",
+                subject  =>  "Price",
+                value    =>  5
+            },
+            value => 10,
+        },
 );
 
 
 for my $filter ( sort keys %tests ) {
-    my %vars = match( $filter );
-    p %vars;
-    is_deeply \%vars, $tests{$filter};
+    my $vars = parser->( $filter );
+    #p $vars;
+    is_deeply $vars, $tests{$filter}, $filter;
 }
 
 done_testing();
