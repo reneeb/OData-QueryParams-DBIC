@@ -20,7 +20,7 @@ use Scalar::Util qw(blessed);
 
 our @EXPORT = qw(params_to_dbic);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub params_to_dbic ( $query_string, %opts ) {
     my $query;
