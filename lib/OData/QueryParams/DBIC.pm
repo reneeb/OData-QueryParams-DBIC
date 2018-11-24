@@ -94,6 +94,8 @@ sub _parse_orderby ( $orderby_data ) {
 }
 
 sub _parse_select ( $select_data ) {
+    return if !defined $select_data;
+    return if !length $select_data;
     return columns => [ split /\s*,\s*/, $select_data ];
 }
 
