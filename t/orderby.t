@@ -19,8 +19,11 @@ my %tests = (
     'orderby=username desc, userid desc'        => { order_by => [ {-desc => 'username'}, {-desc => 'userid'} ] },
     'orderby=username%20desc,%20userid%20desc'  => { order_by => [ {-desc => 'username'}, {-desc => 'userid'} ] },
     'orderby=username, userid asc'              => { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] },
+    'orderby=username, userid ASC'              => { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] },
     'orderby=username , userid asc'             => { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] },
     'orderby=username , userid desc'            => { order_by => [ {-asc => 'username'}, {-desc => 'userid'} ] },
+    'orderby=username , userid DESC'            => { order_by => [ {-asc => 'username'}, {-desc => 'userid'} ] },
+    'orderby=username , userid hallo'           => { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] },
     'orderby=username,userid'                   => { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] },
 );
 
