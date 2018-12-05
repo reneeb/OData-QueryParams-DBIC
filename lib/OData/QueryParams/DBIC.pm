@@ -108,7 +108,7 @@ sub _flatten_filter ($obj) {
         'le'  => '<=',
         'gt'  => '>',
         'ge'  => '>=',
-        'eq'  => '==',
+        'eq'  => '=',
         'ne'  => '!=',
         'and' => \&_build_bool,
         'or'  => \&_build_bool,
