@@ -45,10 +45,10 @@ sub parser {
     state $REGEX = {
         parenthesis => qr/^([(](.*)[)])$/x,
         andor       => qr/^(.*?) \s+ (or|and) \s+ (.*)$/x,
-        math        => qr/\(? ([A-Za-z0-9\/\.]*) \s+ (mod|div|add|sub|mul) \s+ ([0-9]+(?:\.[0-9]+)? ) \)? \s+ (.*) /x,
+        math        => qr/\(? ([A-Za-z0-9\/\._]*) \s+ (mod|div|add|sub|mul) \s+ ([0-9]+(?:\.[0-9]+)? ) \)? \s+ (.*) /x,
         op          => qr/
             ((?:(?:\b[A-Za-z]+\(.*?\))
-                | [A-Za-z0-9\/\.]
+                | [A-Za-z0-9\/\._]
                 | '.*?')*)
             \s+
             (eq|gt|lt|ge|le|ne)
