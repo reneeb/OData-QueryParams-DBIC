@@ -8,7 +8,7 @@ OData::QueryParams::DBIC - parse OData style query params and provide info for D
 
 # VERSION
 
-version 0.05
+version 0.06
 
 # SYNOPSIS
 
