@@ -7,9 +7,10 @@ use Test::More;
 use OData::QueryParams::DBIC;
 
 my %tests = (
-    'orderby=username'     => { order_by => [ {-asc => 'username'} ] },
-    'orderby=username asc' => { order_by => [ {-asc => 'username'} ] },
-    ''                     => {},
+    'orderby=username'         => { order_by => [ {-asc => 'username'} ] },
+    'orderby=username asc'     => { order_by => [ {-asc => 'username'} ] },
+    'orderby=username &test=1' => { order_by => [ {-asc => 'username'} ] },
+    ''                         => {},
 
     'orderby=username asc, userid'              => { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] },
     'orderby=username asc, userid asc'          => { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] },

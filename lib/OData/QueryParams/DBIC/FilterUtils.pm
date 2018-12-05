@@ -75,13 +75,11 @@ sub parser {
 
             if ( @match ) {
                 if ( $key eq 'parenthesis' ) {
-                    if( @match > 1 ) {
-                        if( index( $match[1], ')' ) < index( $match[1], '(' ) ) {
-                            next KEY;
-                        }
-
-                        $obj = parse_fragment($match[1]);
+                    if( index( $match[1], ')' ) < index( $match[1], '(' ) ) {
+                        next KEY;
                     }
+
+                    $obj = parse_fragment($match[1]);
                 }
                 elsif ( $key eq 'math' ) {
                     $obj = parse_fragment( $match[2] . ' ' . $match[3] );
@@ -119,7 +117,8 @@ sub parser {
                     #    }
                     #}
                 }
-                elsif ( $key eq 'startsWith' || $key eq 'endsWith' || $key eq 'contains' || $key eq 'substringof' ) {
+                # ( $key eq 'startsWith' || $key eq 'endsWith' || $key eq 'contains' || $key eq 'substringof' ) {
+                else {
                     $obj = predicate({
                         subject  => $match[0],
                         operator => $key,
@@ -138,18 +137,12 @@ sub parser {
         sub ($filter_string) {
 
             return if !defined $filter_string;
-            return if $filter_string eq '';
 
             $filter_string =~ s{\A\s+}{};
             $filter_string =~ s{\s+\z}{};
 
-            my $obj = {};
-
-            if( length $filter_string > 0 ) {
-                $obj = parse_fragment($filter_string);
-            }
-
-            return $obj;
+            return if $filter_string eq '';
+            return parse_fragment($filter_string);
         };
 }
 

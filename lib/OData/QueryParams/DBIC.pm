@@ -43,8 +43,12 @@ sub params_to_dbic ( $query_string, %opts ) {
     my %filter = _parse_filter( delete $params->{$filter_key} );
 
     my %dbic_opts;
+
+    PARAM_KEY:
     for my $param_key ( keys %{ $params } ) {
-        my $method = $param_key =~ s{\A\$}{}r if !$opts{strict};
+        my $method = $param_key =~ s{\A\$}{}r;
+
+        next PARAM_KEY if $opts{strict} && $param_key !~ m{\A\$}xms;
 
         my $sub = __PACKAGE__->can( '_parse_' . $method );
         if ( $sub ) {
@@ -94,7 +98,6 @@ sub _parse_orderby ( $orderby_data ) {
 }
 
 sub _parse_select ( $select_data ) {
-    return if !defined $select_data;
     return if !length $select_data;
     return columns => [ split /\s*,\s*/, $select_data ];
 }
