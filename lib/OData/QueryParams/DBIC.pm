@@ -40,7 +40,7 @@ sub params_to_dbic ( $query_string, %opts ) {
     my $params = $query->to_hash;
 
     my $filter_key = $opts{strict} ? '$filter' : 'filter';
-    my %filter = _parse_filter( delete $params->{$filter_key} );
+    my %filter = _parse_filter( delete $params->{$filter_key}, %opts );
 
     my %dbic_opts;
 
@@ -70,12 +70,12 @@ sub _parse_skip ( $skip_data ) {
     return ( page => $skip_data + 1 );
 }
 
-sub _parse_filter ( $filter_data ) {
+sub _parse_filter ( $filter_data, %opt ) {
     return if !defined $filter_data;
     return if $filter_data eq '';
 
     my $obj    = parser->( $filter_data );
-    my %filter = _flatten_filter( $obj );
+    my %filter = _flatten_filter( $obj, %opt );
 
     return %filter;
 }
@@ -102,7 +102,7 @@ sub _parse_select ( $select_data ) {
     return columns => [ split /\s*,\s*/, $select_data ];
 }
 
-sub _flatten_filter ($obj) {
+sub _flatten_filter ($obj, %opt) {
     my %map = (
         'lt'  => '<',
         'le'  => '<=',
@@ -132,7 +132,7 @@ sub _flatten_filter ($obj) {
             croak 'Unsupported expression';
         }
         elsif ( ref $rule ) {
-            my ($filter_key, $filter_value) = $rule->($obj);
+            my ($filter_key, $filter_value) = $rule->($obj, %opt);
             $filter{$filter_key}            = $filter_value;
         }
         else {
@@ -142,6 +142,13 @@ sub _flatten_filter ($obj) {
 
             if ( $value =~ m{\A'(.*)'\z} ) {
                 $value = $1;
+            }
+
+            my $is_field         = $obj->{sub_type} && $obj->{sub_type} eq 'field';
+            my $is_foreign_field = $subject =~ m{\A\w+\/};
+
+            if ( $opt{me} && $is_field && !$is_foreign_field ) {
+                $subject = 'me.' . $subject;
             }
 
             $subject =~ s{\A\w+\K/}{.};
@@ -155,14 +162,14 @@ sub _flatten_filter ($obj) {
     return %filter;
 }
 
-sub _build_bool ($obj ) {
+sub _build_bool ($obj, %opt) {
     my $op      = $obj->{operator};
     my $subject = $obj->{subject};
     my $value   = $obj->{value};
 
     return "-$op" => [
-        { _flatten_filter( $subject ) },
-        { _flatten_filter( $value ) },
+        { _flatten_filter( $subject, %opt ) },
+        { _flatten_filter( $value, %opt ) },
     ];
 }
 
