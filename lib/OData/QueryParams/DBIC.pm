@@ -37,16 +37,16 @@ sub params_to_dbic ( $query_string, %opts ) {
         $query = Mojo::Parameters->new( $query_string );
     }
 
-    my $params = $query->to_hash || {};
+    my $params = $query->to_hash;
 
     my $filter_key = $opts{strict} ? '$filter' : 'filter';
     my %filter = _parse_filter( delete $params->{$filter_key} );
 
     my %dbic_opts;
-    for my $param_key ( keys %{ $params || {} } ) {
-        $param_key =~ s{\A\$}{} if !$opts{strict};
+    for my $param_key ( keys %{ $params } ) {
+        my $method = $param_key =~ s{\A\$}{}r if !$opts{strict};
 
-        my $sub = __PACKAGE__->can( '_parse_' . $param_key );
+        my $sub = __PACKAGE__->can( '_parse_' . $method );
         if ( $sub ) {
             my %key_opts = $sub->( $params->{$param_key} );
             %dbic_opts = (%dbic_opts, %key_opts);
@@ -83,7 +83,7 @@ sub _parse_orderby ( $orderby_data ) {
 
     for my $order_by ( @order_bys ) {
         my $direction;
-        $order_by =~ s{\s+((?:de|a)sc)\z}{$1 && ( $direction = $1 ); ''}e;
+        $order_by =~ s{\s+(.*?)\z}{$1 && (lc $1 eq 'desc' || lc $1 eq 'asc') && ( $direction = lc $1 ); ''}e;
 
         $direction //= 'asc';
 
