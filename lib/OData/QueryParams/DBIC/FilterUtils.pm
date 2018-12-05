@@ -13,6 +13,7 @@ no warnings 'experimental::signatures';
 use parent 'Exporter';
 
 our @EXPORT_OK = qw(parser);
+our $VERSION   = '0.05';
 
 use constant Operators => {
     EQUALS             => 'eq',
