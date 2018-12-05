@@ -179,6 +179,12 @@ my %tests = (
             },
             value => 10,
         },
+    "user_id ge 10" =>
+        {
+            operator =>  "ge",
+            subject  =>  "user_id",
+            value    =>  10
+        },
 );
 
 
