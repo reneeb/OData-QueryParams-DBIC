@@ -27,19 +27,6 @@ use constant Operators => {
     NOT_EQUAL          => 'ne',
 };
 
-sub is_unary ($op) {
-    my $value;
-    if ($op eq Operators->{IS_NULL} ) {
-        $value++;
-    }
-
-    return $value;
-};
-
-sub is_logical ($op) {
-    return ( $op eq Operators->{AND} || $op eq Operators->{OR} );
-}
-
 sub predicate ($config) {
 
     $config ||= {};
@@ -178,10 +165,6 @@ __END__
     my $vars   = parser->( $filter );
 
 =head1 METHODS
-
-=head2 is_unary
-
-=head2 is_logical
 
 =head2 predicate
 
