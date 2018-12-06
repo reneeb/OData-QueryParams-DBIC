@@ -52,7 +52,7 @@ sub params_to_dbic ( $query_string, %opts ) {
 
         my $sub = __PACKAGE__->can( '_parse_' . $method );
         if ( $sub ) {
-            my %key_opts = $sub->( $params->{$param_key} );
+            my %key_opts = $sub->( $params->{$param_key}, %opts );
             %dbic_opts = (%dbic_opts, %key_opts);
         }
     }
@@ -60,12 +60,12 @@ sub params_to_dbic ( $query_string, %opts ) {
     return \%filter, \%dbic_opts;
 }
 
-sub _parse_top ( $top_data ) {
+sub _parse_top ( $top_data, %opt ) {
     return if $top_data !~ m{\A[0-9]+\z};
     return ( rows => $top_data );
 }
 
-sub _parse_skip ( $skip_data ) {
+sub _parse_skip ( $skip_data, %opt ) {
     return if $skip_data !~ m{\A[0-9]+\z};
     return ( page => $skip_data + 1 );
 }
@@ -80,7 +80,7 @@ sub _parse_filter ( $filter_data, %opt ) {
     return %filter;
 }
 
-sub _parse_orderby ( $orderby_data ) {
+sub _parse_orderby ( $orderby_data, %opt ) {
     my @order_bys = split /\s*,\s*/, $orderby_data;
 
     my @dbic_order_by;
@@ -97,9 +97,16 @@ sub _parse_orderby ( $orderby_data ) {
     return order_by => \@dbic_order_by;
 }
 
-sub _parse_select ( $select_data ) {
+sub _parse_select ( $select_data, %opt ) {
     return if !length $select_data;
-    return columns => [ split /\s*,\s*/, $select_data ];
+
+    my @columns = split /\s*,\s*/, $select_data;
+    if ( $opt{me} ) {
+        @columns = map{ m{/} ? $_ : 'me.' . $_ }@columns;
+    }
+
+    my @full_names = map{ s{/}{.}r }@columns;
+    return columns => \@full_names;
 }
 
 sub _flatten_filter ($obj, %opt) {
