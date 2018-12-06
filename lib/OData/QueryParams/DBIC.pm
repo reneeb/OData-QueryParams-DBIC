@@ -89,6 +89,12 @@ sub _parse_orderby ( $orderby_data, %opt ) {
         my $direction;
         $order_by =~ s{\s+(.*?)\z}{$1 && (lc $1 eq 'desc' || lc $1 eq 'asc') && ( $direction = lc $1 ); ''}e;
 
+        if ( $opt{me} && $order_by !~ m{/} ) {
+            $order_by = 'me.' . $order_by;
+        }
+
+        $order_by =~ s{/}{.};
+
         $direction //= 'asc';
 
         push @dbic_order_by, { -$direction => $order_by };
