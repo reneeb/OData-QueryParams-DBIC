@@ -98,13 +98,7 @@ sub parser {
                         val_type => 'string',
                     });
 
-                    if ( ref $obj->{subject} ) {
-                        $obj->{sub_type} = undef;
-                    }
-
-                    if ( ref $obj->{value} ) {
-                        $obj->{val_type} = undef;
-                    }
+                    $obj->{sub_type} = undef;
                 }
                 elsif ( $key eq 'andor' ) {
                     $obj = predicate({
@@ -112,14 +106,6 @@ sub parser {
                         operator => $match[1],
                         value    => parse_fragment( $match[2] ),
                     });
-
-                    if ( !ref $obj->{subject} ) {
-                        $obj->{sub_type} = 'field';
-                    }
-
-                    if ( !ref $obj->{value} ) {
-                        $obj->{val_type} = 'field';
-                    }
                 }
                 elsif ( $key eq 'op' ) {
                     $obj = predicate({
