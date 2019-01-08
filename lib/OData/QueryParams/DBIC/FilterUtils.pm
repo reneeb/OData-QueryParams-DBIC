@@ -130,6 +130,9 @@ sub parser {
                     elsif ( $match[2] =~ m{\A[0-9]+(?:\.[0-9]+)?\z} ) {
                         $obj->{val_type} = 'numeric';
                     }
+                    else { # datetimeoffset
+                        $obj->{val_type} = 'function';
+                    }
 
                     #if(typeof obj.value === 'string') {
                     #    var quoted = obj.value.match(/^'(.*)'$/);
