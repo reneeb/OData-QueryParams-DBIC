@@ -224,6 +224,9 @@ DBIx::Class.
     my $query_string  = 'orderby=username asc, userid';
     my ($where,$opts) = params_to_dbic( $query_string );
 
+    # $where = {}
+    # $opts  = { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
+
 More examples:
 
     my $query_string  = 'filter=Price eq 5&orderby=username asc, userid';
@@ -237,13 +240,7 @@ More examples:
     
     # $where = {}
     # $opts  = { columns => ['Price'], order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
-
-    my $query_string  = 'orderby=username asc, userid';
-    my ($where,$opts) = params_to_dbic( $query_string );
-    
-    # $where = {}
-    # $opts  = { order_by => [ {-asc => 'username'}, {-asc => 'userid'} ] }
-
+  
 =head1 SUPPORTED QUERY PARAMS
 
 =head2 filter
